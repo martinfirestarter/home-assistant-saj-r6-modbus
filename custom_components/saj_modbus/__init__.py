@@ -1,4 +1,4 @@
-"""The SAJ Modbus Integration."""
+"""The SAJ R6 Modbus Integration."""
 import asyncio
 import logging
 
@@ -62,7 +62,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Unload SAJ mobus entry."""
+    """Unload SAJ R6 Mobus entry."""
 
     unload_ok = all(
         await asyncio.gather(
