@@ -1,4 +1,4 @@
-"""Sensor Platform Device for SAJ R5 Inverter Modbus."""
+"""Sensor Platform Device for SAJ R6 Inverter Modbus."""
 
 from __future__ import annotations
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -54,7 +54,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 
 class SajSensor(CoordinatorEntity, SensorEntity):
-    """Representation of an SAJ Modbus sensor."""
+    """Representation of an SAJ R6 Modbus sensor."""
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class SajSensor(CoordinatorEntity, SensorEntity):
 
 
 class SajCounterSensor(SajSensor):
-    """Representation of a SAJ Modbus counter sensor."""
+    """Representation of a SAJ R6 Modbus counter sensor."""
 
     @property
     def native_value(self):

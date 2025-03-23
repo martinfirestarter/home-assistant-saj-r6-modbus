@@ -1,4 +1,4 @@
-"""The SAJ Modbus Integration."""
+"""The SAJ R6 Modbus Integration."""
 
 import asyncio
 import logging
@@ -38,13 +38,13 @@ PLATFORMS = ["sensor", "number"]
 
 
 async def async_setup(hass, config):
-    """Set up the SAJ modbus component."""
+    """Set up the SAJ R6 modbus component."""
     hass.data[DOMAIN] = {}
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Set up a SAJ mobus."""
+    """Set up a SAJ R6 mobus."""
     host = entry.data[CONF_HOST]
     name = entry.data[CONF_NAME]
     port = entry.data[CONF_PORT]
@@ -66,7 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
-    """Unload SAJ modbus entry."""
+    """Unload SAJ R6 modbus entry."""
 
     unload_ok = all(
         await asyncio.gather(

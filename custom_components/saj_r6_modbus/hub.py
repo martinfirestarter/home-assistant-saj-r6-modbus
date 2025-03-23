@@ -1,4 +1,4 @@
-"""SAJ Modbus Hub."""
+"""SAJ R6 Modbus Hub."""
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from voluptuous.validators import Number
@@ -105,7 +105,7 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
                 )
             """Read realtime data"""
             realtime_data = await self.hass.async_add_executor_job(
-                self.read_modbus_r5_realtime_data
+                self.read_modbus_r6_realtime_data
             )
 
         except (BrokenPipeError, ConnectionResetError, ConnectionException) as conerr:
@@ -142,7 +142,7 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
 
         return data
 
-    def read_modbus_r5_realtime_data(self) -> dict:
+    def read_modbus_r6_realtime_data(self) -> dict:
         """Read realtime data from inverter."""
         realtime_data = self._read_holding_registers(unit=1, address=0x100, count=60)
 

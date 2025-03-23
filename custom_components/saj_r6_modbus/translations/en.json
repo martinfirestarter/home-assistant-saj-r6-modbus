@@ -2,11 +2,11 @@
   "config": {
     "step": {
       "user": {
-        "title": "Define your SAJ Inverter modbus-connection",
+        "title": "Define your SAJ R6 Inverter modbus-connection",
         "data": {
-          "host": "The ip-address of your SAJ Inverter modbus device",
-          "name": "The prefix to be used for your SAJ Inverter sensors",
-          "port": "The TCP port on which to connect to the SAJ Inverter",
+          "host": "The ip-address of your SAJ R6 Inverter modbus device",
+          "name": "The prefix to be used for your SAJ R6 Inverter sensors",
+          "port": "The TCP port on which to connect to the SAJ R6 Inverter",
           "scan_interval": "The polling frequency of the modbus registers in seconds"
         }
       }

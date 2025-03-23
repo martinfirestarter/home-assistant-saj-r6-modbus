@@ -1,4 +1,4 @@
-"""Constants for SAJ R5 Inverter Modbus."""
+"""Constants for SAJ R6 Inverter Modbus."""
 
 from dataclasses import dataclass
 
@@ -20,17 +20,17 @@ from homeassistant.const import (
 )
 
 
-DOMAIN = "saj_modbus"
-DEFAULT_NAME = "SAJ"
+DOMAIN = "saj_r6_modbus"
+DEFAULT_NAME = "SAJ R6"
 DEFAULT_SCAN_INTERVAL = 60
 DEFAULT_PORT = 502
-CONF_SAJ_HUB = "saj_hub"
+CONF_SAJ_HUB = "saj_r6_hub"
 ATTR_MANUFACTURER = "SAJ Electric"
 
 
 @dataclass
 class SajModbusNumberEntityDescription(NumberEntityDescription):
-    """A class that describes SAJ number entities."""
+    """A class that describes SAJ R6 number entities."""
 
 
 NUMBER_TYPES: dict[str, list[SajModbusNumberEntityDescription]] = {
@@ -47,7 +47,7 @@ NUMBER_TYPES: dict[str, list[SajModbusNumberEntityDescription]] = {
 
 @dataclass
 class SajModbusSensorEntityDescription(SensorEntityDescription):
-    """A class that describes SAJ sensor entities."""
+    """A class that describes SAJ R6 sensor entities."""
 
 
 COUNTER_SENSOR_TYPES: dict[str, list[SajModbusSensorEntityDescription]] = {

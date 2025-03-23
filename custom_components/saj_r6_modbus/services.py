@@ -1,4 +1,4 @@
-"""SAJ Modbus services."""
+"""SAJ R6 Modbus services."""
 
 from collections.abc import Mapping
 from typing import Any
@@ -33,14 +33,14 @@ SERVICE_TO_SCHEMA = {
 
 @callback
 def async_setup_services(hass: HomeAssistant) -> None:
-    """Set up services for SAJ Modbus integration."""
+    """Set up services for SAJ R6 Modbus integration."""
 
     services = {
         SERVICE_SET_DATE_TIME: async_set_date_time,
     }
 
     async def async_call_service(service_call: ServiceCall) -> None:
-        """Call correct SAJ Modbus service."""
+        """Call correct SAJ R6 Modbus service."""
         await services[service_call.service](hass, service_call.data)
 
     for service in SUPPORTED_SERVICES:
@@ -54,7 +54,7 @@ def async_setup_services(hass: HomeAssistant) -> None:
 
 @callback
 def async_unload_services(hass: HomeAssistant) -> None:
-    """Unload SAJ Modbus services."""
+    """Unload SAJ R6 Modbus services."""
     for service in SUPPORTED_SERVICES:
         hass.services.async_remove(SAJ_DOMAIN, service)
 

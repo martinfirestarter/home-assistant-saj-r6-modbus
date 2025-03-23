@@ -1,4 +1,4 @@
-"""Number entity for SAJ Modbus integration."""
+"""Number entity for SAJ R6 Modbus integration."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
 
 class SajNumber(CoordinatorEntity, NumberEntity):
-    """Representation of an SAJ Modbus number."""
+    """Representation of an SAJ R6 Modbus number."""
 
     coordinator: SAJModbusHub
 

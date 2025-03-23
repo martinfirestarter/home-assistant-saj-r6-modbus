@@ -1,4 +1,4 @@
-"""Config flow for SAJ R5 Inverter Modbus."""
+"""Config flow for SAJ R6 Inverter Modbus."""
 
 import ipaddress
 import re
@@ -41,7 +41,7 @@ def saj_modbus_entries(hass: HomeAssistant):
 
 
 class SAJModbusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """SAJ Modbus configflow."""
+    """SAJ R6 Modbus configflow."""
 
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
