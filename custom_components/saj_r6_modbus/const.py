@@ -18,7 +18,7 @@ from homeassistant.const import (
     UnitOfTemperature,
     UnitOfTime,
 )
-
+from homeassistant.helpers.entity import EntityCategory
 
 DOMAIN = "saj_r6_modbus"
 DEFAULT_NAME = "SAJ R6"
@@ -102,70 +102,79 @@ COUNTER_SENSOR_TYPES: dict[str, list[SajModbusSensorEntityDescription]] = {
 }
 
 SENSOR_TYPES: dict[str, list[SajModbusSensorEntityDescription]] = {
-    "DevType": SajModbusSensorEntityDescription(
+    "Type": SajModbusSensorEntityDescription(
         name="Device Type",
-        key="devtype",
+        key="type",
         icon="mdi:information-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
     "SubType": SajModbusSensorEntityDescription(
-        name="Sub Type",
+        name="Machine Power",
         key="subtype",
-        icon="mdi:information-outline",
-        entity_registry_enabled_default=False,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        icon="mdi:solar-power",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=SensorDeviceClass.ENERGY,
     ),
-    "CommVer": SajModbusSensorEntityDescription(
+    "CommProVersion": SajModbusSensorEntityDescription(
         name="Comms Protocol Version",
-        key="commver",
+        key="commproversion",
         icon="mdi:information-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
     "SN": SajModbusSensorEntityDescription(
         name="Serial Number",
         key="sn",
         icon="mdi:information-outline",
-        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "PC": SajModbusSensorEntityDescription(
         name="Product Code",
         key="pc",
         icon="mdi:information-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
     "DV": SajModbusSensorEntityDescription(
         name="Display Software Version",
         key="dv",
         icon="mdi:information-outline",
-        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "MCV": SajModbusSensorEntityDescription(
         name="Master Ctrl Software Version",
         key="mcv",
         icon="mdi:information-outline",
-        entity_registry_enabled_default=False,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     "SCV": SajModbusSensorEntityDescription(
-        name="Slave Ctrl Software Version",
+        name="Slave Control Software Version",
         key="scv",
         icon="mdi:information-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
     "DispHWVersion": SajModbusSensorEntityDescription(
         name="Display Board Hardware Version",
         key="disphwversion",
         icon="mdi:information-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
     "CtrlHWVersion": SajModbusSensorEntityDescription(
         name="Control Board Hardware Version",
         key="ctrlhwversion",
         icon="mdi:information-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
     "PowerHWVersion": SajModbusSensorEntityDescription(
         name="Power Board Hardware Version",
         key="powerhwversion",
         icon="mdi:information-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
     ),
     "MPVStatus": SajModbusSensorEntityDescription(

@@ -6,6 +6,7 @@ import logging
 import threading
 from datetime import datetime, timedelta
 from homeassistant.core import CALLBACK_TYPE, callback, HomeAssistant
+from homeassistant.const import STATE_UNAVAILABLE
 from homeassistant.helpers import entity_registry
 from homeassistant.components.number import DOMAIN as NUMBER_DOMAIN
 from pymodbus.client import ModbusTcpClient
@@ -122,22 +123,22 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
         """Read data about inverter."""
         inverter_data = self._read_holding_registers(unit=1, address=0x8F00, count=29)
 
-        if inverter_data.isError():
+        if inverter_data.isError() or len(inverter_data.registers) != 29:
             return {}
 
         registers = inverter_data.registers
         data = {
-            "devtype": registers[0],
-            "subtype": registers[1],
-            "commver": round(registers[2] * 0.001, 3),
-            "sn": ''.join(chr(registers[i] >> 8) + chr(registers[i] & 0xFF) for i in range(3, 13)).rstrip('\x00'),
-            "pc": ''.join(chr(registers[i] >> 8) + chr(registers[i] & 0xFF) for i in range(13, 23)).rstrip('\x00'),
-            "dv": round(registers[23] * 0.001, 3),
-            "mcv": round(registers[24] * 0.001, 3),
-            "scv": round(registers[25] * 0.001, 3),
-            "disphwversion": round(registers[26] * 0.001, 3),
-            "ctrlhwversion": round(registers[27] * 0.001, 3),
-            "powerhwversion": round(registers[28] * 0.001, 3)
+            "type": registers[0],
+            "subtype": round(registers[1] * 0.001, 3),
+            "commproversion": round(registers[2] * 0.001, 3),
+            "sn": ''.join(chr(registers[i] >> 8) + chr(registers[i] & 0xFF) for i in range(3, 13)).rstrip('\x00') if registers[3] != 0x00 else STATE_UNAVAILABLE,
+            "pc": ''.join(chr(registers[i] >> 8) + chr(registers[i] & 0xFF) for i in range(13, 23)).rstrip('\x00') if registers[13] != 0x00 else STATE_UNAVAILABLE,
+            "dv": f"{round(registers[23] * 0.001, 3):.3f}" if registers[23] != 0xFFFF else STATE_UNAVAILABLE,
+            "mcv": f"{round(registers[24] * 0.001, 3):.3f}" if registers[24] != 0xFFFF else STATE_UNAVAILABLE,
+            "scv": f"{round(registers[25] * 0.001, 3):.3f}" if registers[25] != 0xFFFF else STATE_UNAVAILABLE,
+            "disphwversion": f"{round(registers[26] * 0.001, 3):.3f}" if registers[26] != 0xFFFF else STATE_UNAVAILABLE,
+            "ctrlhwversion": f"{round(registers[27] * 0.001, 3):.3f}" if registers[27] != 0xFFFF else STATE_UNAVAILABLE,
+            "powerhwversion": f"{round(registers[28] * 0.001, 3):.3f}" if registers[28] != 0xFFFF else STATE_UNAVAILABLE,
         }
 
         return data

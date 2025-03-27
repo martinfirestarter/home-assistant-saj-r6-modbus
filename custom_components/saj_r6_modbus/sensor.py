@@ -77,7 +77,7 @@ class SajSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def unique_id(self) -> str | None:
-        """Return unique ID fro sensor."""
+        """Return unique ID for sensor."""
         return f"{self._platform_name}_{self.entity_description.key}"
 
     @property
