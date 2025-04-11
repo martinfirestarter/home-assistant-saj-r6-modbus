@@ -73,14 +73,21 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
             return self._client.write_registers(
                 address=address, values=values, slave=unit
             )
-    def convert_to_signed(self, value):
-        """Convert unsigned integers to signed integers."""
+    def convert_to_signed16(self, value):
+        """Convert unsigned 16 bit integers to signed integers."""
         if value >= 0x8000:
             return value - 0x10000
         else:
             return value
 
-    def parse_datetime (self, registers: list[int]) -> str:
+    def convert_to_signed32(self, value):
+        """Convert unsigned 32 bit integers to signed integers."""
+        if value >= 0x80000000:
+            return value - 0x100000000
+        else:
+            return value
+
+    def parse_datetime (self, registers: list[int]) -> datetime:
         """Extract date and time values from registers."""
 
         year = registers[0]  # yyyy
@@ -90,7 +97,7 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
         minute = registers[2] & 0xFF  # mm
         second = registers[3] >> 8  # ss
 
-        timevalues = f"{year}{month:02}{day:02}{hour:02}{minute:02}{second:02}"
+        timevalues = f"{year:04}{month:02}{day:02}{hour:02}{minute:02}{second:02}"
         # Convert to datetime object
         date_time_obj = datetime.astimezone(datetime.strptime(timevalues, '%Y%m%d%H%M%S'))
 
@@ -112,9 +119,6 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
         except (BrokenPipeError, ConnectionResetError, ConnectionException) as conerr:
             _LOGGER.error("Reading realtime data failed! Inverter is unreachable.")
             _LOGGER.debug("Connection error: %s", conerr)
-            realtime_data["mpvmode"] = 0
-            realtime_data["mpvstatus"] = DEVICE_STATUSSES[0]
-            realtime_data["power"] = 0
 
         self.close()
         return {**self.inverter_data, **realtime_data}
@@ -145,38 +149,31 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
 
     def read_modbus_r6_realtime_data(self) -> dict:
         """Read realtime data from inverter."""
-        realtime_data = self._read_holding_registers(unit=1, address=0x100, count=60)
+        realtime_data = self._read_holding_registers(unit=1, address=0x6000, count=99)
 
-        if realtime_data.isError():
+        if realtime_data.isError() or len(realtime_data.registers) != 99:
             return {}
 
         registers = realtime_data.registers
         data = {}
 
-        mpvmode = registers[0]
-        data["mpvmode"] = mpvmode
+        data["time"] = self.parse_datetime(registers[0:4])
+        data["totalenergy"] = round((registers[4] << 16 | registers[5]) * 0.01, 2)
+        data["yearenergy"] = round((registers[6] << 16 | registers[7]) * 0.01, 2)
+        data["monthenergy"] = round((registers[8] << 16 | registers[9]) * 0.01, 2)
+        data["todayenergy"] = round((registers[10] << 16 | registers[11]) * 0.01, 2)
+        data["totalhour"] = round((registers[12] << 16 | registers[13]) * 0.1, 1)
+        data["todayhour"] = round(registers[14] * 0.1, 1)
 
-        if mpvmode == 2:
-            data["limitpower"] = (
-                110
-                if mpvmode != self.data.get("mpvmode")
-                else self.data.get("limitpower")
-            )
-
-        DEVICE_STATUSSES = {
-            0: "Not Connected",
-            1: "Waiting",
-            2: "Normal",
-            3: "Error",
-            4: "Upgrading",
-        }
-
-        data["mpvstatus"] = DEVICE_STATUSSES.get(mpvmode, "Unknown")
-
-        faultMsg0 = registers[1] << 16 | registers[2]
-        faultMsg1 = registers[3] << 16 | registers[4]
-        faultMsg2 = registers[5] << 16 | registers[6]
-
+        data["errorcount"] = registers[15]
+        data["errorsn"] = registers[16]
+        data["settingdatasn"] = registers[17]
+        # data["reserved"] = registers[18]
+        mpvmode = registers[19]
+        data["mpvmode"] = STATE_UNAVAILABLE if mpvmode < 1 or mpvmode > 3 else DEVICE_STATUSSES.get(mpvmode)
+        faultMsg0 = registers[20] << 16 | registers[21]
+        faultMsg1 = registers[22] << 16 | registers[23]
+        faultMsg2 = registers[24] << 16 | registers[25]
         faultMsg = []
         faultMsg.extend(
             self.translate_fault_code_to_messages(faultMsg0, FAULT_MESSAGES[0].items())
@@ -187,67 +184,85 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
         faultMsg.extend(
             self.translate_fault_code_to_messages(faultMsg2, FAULT_MESSAGES[2].items())
         )
-
         # status value can hold max 255 chars in HA
         data["faultmsg"] = ", ".join(faultMsg).strip()[0:254]
         if faultMsg:
             _LOGGER.error("Fault message: " + ", ".join(faultMsg).strip())
+        data["conntime"] = registers[26]
 
-        data["pv1volt"] = round(registers[7] * 0.1, 1)
-        data["pv1curr"] = round(registers[8] * 0.01, 2)
-        data["pv1power"] = round(registers[9] * 1, 0)
+        data["energy"] = round((registers[27] << 16 | registers[28]) * 0.01, 2)
+        data["power"] = (registers[29] << 16 | registers[30])
+        data["qpower"] = self.convert_to_signed32((registers[31] << 16 | registers[32]))
+        data["pf"] = round(self.convert_to_signed16(registers[33]) * 0.001, 3)
 
-        data["pv2volt"] = round(registers[10] * 0.1, 1)
-        data["pv2curr"] = round(registers[11] * 0.01, 2)
-        data["pv2power"] = round(registers[12] * 1, 0)
+        data["l1volt"] = round(registers[34] * 0.1, 1)
+        data["l1curr"] = round(registers[35] * 0.01, 2)
+        data["l1freq"] = round(registers[36] * 0.01, 2)
+        data["l1dci"] = self.convert_to_signed16(registers[37])
+        data["l1power"] = registers[38]
+        data["l1pf"] = round(self.convert_to_signed16(registers[39]) * 0.001, 3)
+        data["l2volt"] = round(registers[40] * 0.1, 1)
+        data["l2curr"] = round(registers[41] * 0.01, 2)
+        data["l2freq"] = round(registers[42] * 0.01, 2)
+        data["l2dci"] = self.convert_to_signed16(registers[43])
+        data["l2power"] = registers[44]
+        data["l2pf"] = round(self.convert_to_signed16(registers[45]) * 0.001, 3)
+        data["l3volt"] = round(registers[46] * 0.1, 1)
+        data["l3curr"] = round(registers[47] * 0.01, 2)
+        data["l3freq"] = round(registers[48] * 0.01, 2)
+        data["l3dci"] = self.convert_to_signed16(registers[49])
+        data["l3power"] = registers[50]
+        data["l3pf"] = round(self.convert_to_signed16(registers[51]) * 0.001, 3)
+        data["nevolt"] = round(registers[52] * 0.1, 1)
+        data["gfci"] = self.convert_to_signed16(registers[53])
+        data["busvolt"] = round(registers[54] * 0.1, 1)
+        data["busvoltm"] = round(registers[55] * 0.1, 1)
 
-        data["pv3volt"] = round(registers[13] * 0.1, 1)
-        data["pv3curr"] = round(registers[14] * 0.01, 2)
-        data["pv3power"] = round(registers[15] * 1, 0)
+        data["invtempc1"] = round(self.convert_to_signed16(registers[56]) * 0.1, 1)
+        data["invtempcl1"] = round(self.convert_to_signed16(registers[57]) * 0.1, 1)
+        data["invtempcl2"] = round(self.convert_to_signed16(registers[58]) * 0.1, 1)
+        data["invtempcl3"] = round(self.convert_to_signed16(registers[59]) * 0.1, 1)
+        data["invtempccavity"] = round(self.convert_to_signed16(registers[60]) * 0.1, 1)
+        # data["pvtempc1"] = round(self.convert_to_signed16(registers[61]) * 0.1, 1)
+        # data["pvtempc2"] = round(self.convert_to_signed16(registers[62]) * 0.1, 1)
+        # data["pvtempc3"] = round(self.convert_to_signed16(registers[63]) * 0.1, 1)
+        # data["pvtempc4"] = round(self.convert_to_signed16(registers[64]) * 0.1, 1)
 
-        data["busvolt"] = round(registers[16] * 0.1, 1)
-        data["invtempc"] = round(self.convert_to_signed(registers[17]) * 0.1, 1)
-        data["gfci"] = self.convert_to_signed(registers[18])
-        data["power"] = registers[19]
-        data["qpower"] = self.convert_to_signed(registers[20])
-        data["pf"] = round(self.convert_to_signed(registers[21]) * 0.001, 3)
+        data["iso1"] = registers[65]
+        data["iso2"] = registers[66]
+        data["iso3"] = registers[67]
+        data["iso4"] = registers[68]
 
-        data["l1volt"] = round(registers[22] * 0.1, 1)
-        data["l1curr"] = round(registers[23] * 0.01, 2)
-        data["l1freq"] = round(registers[24] * 0.01, 2)
-        data["l1dci"] = self.convert_to_signed(registers[25])
-        data["l1power"] = registers[26]
-        data["l1pf"] = round(self.convert_to_signed(registers[27]) * 0.001, 3)
-
-        data["l2volt"] = round(registers[28] * 0.1, 1)
-        data["l2curr"] = round(registers[29] * 0.01, 2)
-        data["l2freq"] = round(registers[30] * 0.01, 2)
-        data["l2dci"] = self.convert_to_signed(registers[31])
-        data["l2power"] = registers[32]
-        data["l2pf"] = round(self.convert_to_signed(registers[33]) * 0.001, 3)
-
-        data["l3volt"] = round(registers[34] * 0.1, 1)
-        data["l3curr"] = round(registers[35] * 0.01, 2)
-        data["l3freq"] = round(registers[36] * 0.01, 2)
-        data["l3dci"] = self.convert_to_signed(registers[37])
-        data["l3power"] = registers[38]
-        data["l3pf"] = round(self.convert_to_signed(registers[39]) * 0.001, 3)
-
-        data["iso1"] = registers[40]
-        data["iso2"] = registers[41]
-        data["iso3"] = registers[42]
-        data["iso4"] = registers[43]
-
-        data["todayenergy"] = round(registers[44] * 0.01, 2)
-        data["monthenergy"] = round((registers[45] << 16 | registers[46]) * 0.01, 2)
-        data["yearenergy"] = round((registers[47] << 16 | registers[48]) * 0.01, 2)
-        data["totalenergy"] = round((registers[49] << 16 | registers[50]) * 0.01, 2)
-
-        data["todayhour"] = round(registers[51] * 0.1, 1)
-        data["totalhour"] = round((registers[52] << 16 | registers[53]) * 0.1, 1)
-
-        data["errorcount"] = registers[54]
-        data["datetime"] = self.parse_datetime(registers[55:60])
+        data["pv1volt"] = round(registers[69] * 0.1, 1) if registers[69] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv1curr"] = round(registers[70] * 0.01, 2) if registers[70] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv1power"] = registers[71] if registers[71] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv2volt"] = round(registers[72] * 0.1, 1) if registers[72] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv2curr"] = round(registers[73] * 0.01, 2) if registers[73] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv2power"] = registers[74] if registers[74] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv3volt"] = round(registers[75] * 0.1, 1) if registers[75] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv3curr"] = round(registers[76] * 0.01, 2) if registers[76] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv3power"] = registers[77] if registers[77] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv4volt"] = round(registers[78] * 0.1, 1) if registers[78] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv4curr"] = round(registers[79] * 0.01, 2) if registers[79] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv4power"] = registers[80] if registers[80] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv5volt"] = round(registers[81] * 0.1, 1) if registers[81] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv5curr"] = round(registers[82] * 0.01, 2) if registers[82] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv5power"] = registers[83] if registers[83] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv6volt"] = round(registers[84] * 0.1, 1) if registers[84] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv6curr"] = round(registers[85] * 0.01, 2) if registers[85] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv6power"] = registers[86] if registers[86] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv1strcurr1"] = round(registers[87] * 0.01, 2) if registers[87] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv1strcurr2"] = round(registers[88] * 0.01, 2) if registers[88] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv2strcurr1"] = round(registers[89] * 0.01, 2) if registers[89] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv2strcurr2"] = round(registers[90] * 0.01, 2) if registers[90] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv3strcurr1"] = round(registers[91] * 0.01, 2) if registers[91] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv3strcurr2"] = round(registers[92] * 0.01, 2) if registers[92] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv4strcurr1"] = round(registers[93] * 0.01, 2) if registers[93] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv4strcurr2"] = round(registers[94] * 0.01, 2) if registers[94] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv5strcurr1"] = round(registers[95] * 0.01, 2) if registers[95] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv5strcurr2"] = round(registers[96] * 0.01, 2) if registers[96] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv6strcurr1"] = round(registers[97] * 0.01, 2) if registers[97] != 0xFFFF else STATE_UNAVAILABLE
+        data["pv6strcurr2"] = round(registers[98] * 0.01, 2) if registers[98] != 0xFFFF else STATE_UNAVAILABLE
 
         return data
 
