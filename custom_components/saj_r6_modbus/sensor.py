@@ -30,10 +30,14 @@ async def async_setup_entry(hass, entry, async_add_entities):
     hub_name = entry.data[CONF_NAME]
     hub = hass.data[DOMAIN][hub_name]["hub"]
 
+    device_data = hub.inverter_data
     device_info = {
         "identifiers": {(DOMAIN, hub_name)},
         "name": hub_name,
         "manufacturer": ATTR_MANUFACTURER,
+        "sw_version": device_data["dv"],
+        "hw_version": device_data["mcv"],
+        "serial_number": device_data["sn"],
     }
 
     entities = []
@@ -98,6 +102,10 @@ class SajSensor(CoordinatorEntity, SensorEntity):
         self.entity_description: SajModbusSensorEntityDescription = description
 
         super().__init__(coordinator=hub)
+
+    @property
+    def device_info(self):
+        return self._attr_device_info
 
     @property
     def name(self):

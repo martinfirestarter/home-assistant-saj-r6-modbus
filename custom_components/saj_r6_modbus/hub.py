@@ -106,11 +106,10 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
     async def _async_update_data(self) -> dict:
         realtime_data = {}
         try:
-            """Inverter info is only fetched once"""
-            if not self.inverter_data:
-                self.inverter_data = await self.hass.async_add_executor_job(
-                    self.read_modbus_inverter_data
-                )
+            """Read inverter info"""
+            self.inverter_data = await self.hass.async_add_executor_job(
+                self.read_modbus_inverter_data
+            )
             """Read realtime data"""
             realtime_data = await self.hass.async_add_executor_job(
                 self.read_modbus_r6_realtime_data
@@ -121,7 +120,7 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
             _LOGGER.debug("Connection error: %s", conerr)
 
         self.close()
-        return {**self.inverter_data, **realtime_data}
+        return {**realtime_data}
 
     def read_modbus_inverter_data(self) -> dict:
         """Read data about inverter."""
