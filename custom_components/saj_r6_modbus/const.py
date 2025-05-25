@@ -350,7 +350,7 @@ SENSOR_TYPES: dict[str, list[SajModbusSensorEntityDescription]] = {
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
-    ),"NEVolt": SajModbusSensorEntityDescription(
+    ), "NEVolt": SajModbusSensorEntityDescription(
         name="N-line voltage to earth",
         key="nevolt",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
@@ -643,7 +643,7 @@ SENSOR_TYPES: dict[str, list[SajModbusSensorEntityDescription]] = {
         state_class=SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default=False,
     ),
-    
+
     "PV1StrCurr2": SajModbusSensorEntityDescription(
         name="PV1 String current 2",
         key="pv1strcurr2",
@@ -689,7 +689,7 @@ SENSOR_TYPES: dict[str, list[SajModbusSensorEntityDescription]] = {
         state_class=SensorStateClass.MEASUREMENT,
         entity_registry_enabled_default=False,
     ),
-    
+
     "PV4StrCurr1": SajModbusSensorEntityDescription(
         name="PV4 String current 1",
         key="pv4strcurr1",

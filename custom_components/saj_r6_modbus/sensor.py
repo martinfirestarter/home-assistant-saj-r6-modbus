@@ -22,6 +22,7 @@ from .const import (
 
 from .hub import SAJModbusHub
 
+
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up entry for hub."""
     hub_name = entry.data[CONF_NAME]
@@ -133,7 +134,8 @@ class SajTotalSensor(SajSensor):
         """Initialize the sensor."""
         self._last_value = None
 
-        super().__init__(platform_name=platform_name, hub=hub, device_info=device_info, description=description)
+        super().__init__(platform_name=platform_name, hub=hub,
+                         device_info=device_info, description=description)
 
     @property
     def native_value(self):
@@ -151,6 +153,7 @@ class SajTotalSensor(SajSensor):
 
         return self._last_value
 
+
 class SajDatetimeSensor(SajSensor, ABC):
     """Representation of a SAJ Modbus day sensor."""
 
@@ -165,7 +168,8 @@ class SajDatetimeSensor(SajSensor, ABC):
         self._last_value = None
         self._last_datetime = None
 
-        super().__init__(platform_name=platform_name, hub=hub, device_info=device_info, description=description)
+        super().__init__(platform_name=platform_name, hub=hub,
+                         device_info=device_info, description=description)
 
     @abstractmethod
     def _same(self, dt1: datetime, dt2: datetime) -> bool:
@@ -188,10 +192,11 @@ class SajDatetimeSensor(SajSensor, ABC):
             self._last_value = value
             return value
         elif not self._same(self._last_datetime, now):
-                self._last_value = 0
+            self._last_value = 0
 
         return self._last_value
-    
+
+
 class SajDaySensor(SajDatetimeSensor):
     """Representation of a SAJ Modbus day sensor."""
 
@@ -203,10 +208,12 @@ class SajDaySensor(SajDatetimeSensor):
         description: SajModbusSensorEntityDescription,
     ):
         """Initialize the sensor."""
-        super().__init__(platform_name=platform_name, hub=hub, device_info=device_info, description=description)
+        super().__init__(platform_name=platform_name, hub=hub,
+                         device_info=device_info, description=description)
 
     def _same(self, dt1: datetime, dt2: datetime) -> bool:
         return dt1.date() == dt2.date()
+
 
 class SajMonthSensor(SajDatetimeSensor):
     """Representation of a SAJ Modbus month sensor."""
@@ -219,10 +226,12 @@ class SajMonthSensor(SajDatetimeSensor):
         description: SajModbusSensorEntityDescription,
     ):
         """Initialize the sensor."""
-        super().__init__(platform_name=platform_name, hub=hub, device_info=device_info, description=description)
+        super().__init__(platform_name=platform_name, hub=hub,
+                         device_info=device_info, description=description)
 
     def _same(self, dt1: datetime, dt2: datetime) -> bool:
         return dt1.month == dt2.month and dt1.year == dt2.year
+
 
 class SajYearSensor(SajDatetimeSensor):
     """Representation of a SAJ Modbus year sensor."""
@@ -235,7 +244,8 @@ class SajYearSensor(SajDatetimeSensor):
         description: SajModbusSensorEntityDescription,
     ):
         """Initialize the sensor."""
-        super().__init__(platform_name=platform_name, hub=hub, device_info=device_info, description=description)
+        super().__init__(platform_name=platform_name, hub=hub,
+                         device_info=device_info, description=description)
 
     def _same(self, dt1: datetime, dt2: datetime) -> bool:
         return dt1.year == dt2.year
