@@ -15,7 +15,6 @@ from pymodbus.pdu import ModbusPDU
 
 from .const import (
     DEVICE_STATUSSES,
-    DOMAIN,
     FAULT_MESSAGES,
 )
 
@@ -67,12 +66,6 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
                 address=address, count=count, slave=unit
             )
 
-    def _write_registers(self, unit: int, address: int, values: list[int]) -> ModbusPDU:
-        """Write registers."""
-        with self._lock:
-            return self._client.write_registers(
-                address=address, values=values, slave=unit
-            )
     def convert_to_signed16(self, value):
         """Convert unsigned 16 bit integers to signed integers."""
         if value >= 0x8000:
@@ -279,48 +272,3 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
 
         return messages
 
-    def limiter_is_disabled(self) -> bool:
-        """Return True if the limiter entity is disabled, False otherwise."""
-        ent_reg = entity_registry.async_get(self.hass)
-        limiter_entity_id = ent_reg.async_get_entity_id(
-            NUMBER_DOMAIN, DOMAIN, f"{self.name}_limitpower"
-        )
-        if (
-            limiter_entity_id is None
-            or (ent_reg_entry := ent_reg.async_get(limiter_entity_id)) is None
-        ):
-            return True
-        return ent_reg_entry.disabled
-
-    def set_limitpower(self, value: float) -> None:
-        """Limit the power output of the inverter."""
-        if self.limiter_is_disabled():
-            return
-        response = self._write_registers(
-            unit=1, address=0x801F, values=[int(value * 10)]
-        )
-        if response.isError():
-            return
-        self.data["limitpower"] = value
-        self.hass.add_job(self.async_update_listeners)
-
-    def set_date_and_time(self, date_time: datetime | None = None) -> None:
-        """Set the time and date on the inverter."""
-        if date_time is None:
-            date_time = datetime.now()
-
-        values = [
-            date_time.year,
-            (date_time.month << 8) + date_time.day,
-            (date_time.hour << 8) + date_time.minute,
-            (date_time.second << 8),
-        ]
-
-        response = self._write_registers(unit=1, address=0x8020, values=values)
-        if response.isError():
-            raise ModbusException("Error setting date and time")
-
-    def set_value(self, key: str, value: float) -> None:
-        """Set value matching key."""
-        if key == "limitpower":
-            self.set_limitpower(value)

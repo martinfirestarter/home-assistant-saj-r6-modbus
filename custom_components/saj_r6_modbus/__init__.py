@@ -15,7 +15,6 @@ from .const import (
     DOMAIN,
 )
 from .hub import SAJModbusHub
-from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +33,7 @@ CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: vol.Schema({cv.slug: SAJ_MODBUS_SCHEMA})}, extra=vol.ALLOW_EXTRA
 )
 
-PLATFORMS = ["sensor", "number"]
+PLATFORMS = ["sensor"]
 
 
 async def async_setup(hass, config):
@@ -59,8 +58,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN][name] = {"hub": hub}
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-    async_setup_services(hass)
 
     return True
 
