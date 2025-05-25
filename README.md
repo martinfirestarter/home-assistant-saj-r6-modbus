@@ -1,18 +1,11 @@
-[![release][release-badge]][release-url]
-![active][active-badge]
-![downloads][downloads-badge]
-[![hacs][hacs-badge]][hacs-url]
-![license][lic-badge]
-
-
-<a href="https://buymeacoffee.com/wimbo" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/white_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
-
 ## SAJ R6 Inverter Modbus - A Home Assistant custom component for SAJ R6 inverters
 
-Home assistant Custom Component for reading data from SAJ R6 Inverters through modbus TCP.
+Home Assistant Custom Component for reading data from SAJ R6 Inverters through Modbus TCP.
 
 Implements SAJ R6 Inverter registers from [`saj-modbus-communication-protocol.pdf`](https://github.com/martinfirestarter/home-assistant-saj-r6-modbus/blob/main/saj-modbus-communication-protocol.pdf).
 
+This integration has been tested with SAJ R6-15K-T2-32 inverter with SAJ AIO3 module.
+The module exposes a Modbus TCP Server on port 502.
 
 ### Features
 
@@ -20,22 +13,22 @@ Implements SAJ R6 Inverter registers from [`saj-modbus-communication-protocol.pd
 - Separate sensor per register
 - Auto applies scaling factor
 - Configurable polling interval
-- All modbus registers are read within 1 read cycle for data consistency between sensors.
+- All Modbus registers are read within 1 read cycle for data consistency between sensors.
 
-
-### Configuration
-Go to the integrations page in your configuration and click on new integration -> SAJ R6 Modbus
-
-Home Assistant Custom Component for reading data from SAJ R6 Inverters through modbus over TCP.
-This integration should work with SAJ R6 inverters.
 
 ## Installation
 
-ToDo
+Add folder custom_components\saj_r6_modbus to your configuration.
+
+### Configuration
+Go to the Integrations page in your configuration and click on new Integration -> SAJ R6 Modbus.
+
+Home Assistant Custom Component for reading data from SAJ R6 Inverters through Modbus over TCP.
+This integration should work with SAJ R6 inverters.
 
 ##  Credits
 
- Idea based on [`home-assistant-saj-r5-modbus`](https://github.com/wimb0/home-assistant-saj-r5-modbus) from [@wimb0](https://github.com/wimb0).
+Idea based on [`home-assistant-saj-r5-modbus`](https://github.com/wimb0/home-assistant-saj-r5-modbus) from [@wimb0](https://github.com/wimb0).
  
 [![saj_logo](https://github.com/martinfirestarter/home-assistant-saj-r6-modbus/blob/main/images/saj_r6_modbus/logo.png)](https://www.saj-electric.com/)
 
