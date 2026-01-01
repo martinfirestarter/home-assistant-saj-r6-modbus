@@ -64,7 +64,7 @@ class SAJModbusHub(DataUpdateCoordinator[dict]):
         """Read holding registers."""
         with self._lock:
             return self._client.read_holding_registers(
-                address=address, count=count, slave=unit
+                address=address, count=count, device_id=unit
             )
 
     def convert_to_signed16(self, value):
